@@ -7,6 +7,9 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -24,6 +27,9 @@ import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.face.FaceDetector;
 import com.google.android.gms.vision.face.Landmark;
 
+import java.io.File;
+import java.io.IOException;
+
 public class MainActivity extends AppCompatActivity {
 
     static final int REQUEST_IMAGE_CAPTURE = 1;
@@ -32,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
     RelativeLayout rl;
     FloatingActionButton save,share,close;
     ImageView photo;
-
+    Uri imageUri;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,9 +53,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
-        }
+        File photo = new File(Environment.getExternalStorageDirectory(),"emoji_image");
+        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photo));
+        imageUri = Uri.fromFile(photo);
+        startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
     }
 
 
@@ -63,9 +70,15 @@ public class MainActivity extends AppCompatActivity {
            photo.setVisibility(View.VISIBLE);
 
            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
+        try {
+
+        Bitmap imageBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(),imageUri);
             photo.setImageBitmap(imageBitmap);
             detectFace(imageBitmap);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -145,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-
+        photo.setImageDrawable(new BitmapDrawable(getResources(),temporarybitmap));
         detector.release();
     }
 
